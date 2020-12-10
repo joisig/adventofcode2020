@@ -1,5 +1,6 @@
 defmodule Day10 do
 
+  # This was correct but too slow for problem 2
   def combine_skipping(0, _) do
     [[]]
   end
@@ -42,6 +43,7 @@ defmodule Day10 do
     end
   end
 
+  # Correct but too slow for problem 2
   def generate_valid_n(input, head, tail, skip_n) do
     len = length(input)
     candidates = combine_skipping(length(input) - skip_n, input) |> Enum.map(&([head|&1] ++ [tail]))
@@ -50,6 +52,7 @@ defmodule Day10 do
     end)
   end
 
+  # Correct but too slow for problem 2
   def generate_valid(input, head, tail, skip_n) do
     valid = generate_valid_n(input, head, tail, skip_n)
     case valid do
@@ -76,6 +79,9 @@ defmodule Day10 do
     1
   end
   def count_valid([head|rest] = list, must_reach) do
+    # Memoize, otherwise we calculate results for the same
+    # lists billions (?) of times. With this, results are
+    # near-instant.
     case Process.get(list) do
       nil ->
         r = rests(rest, head)
