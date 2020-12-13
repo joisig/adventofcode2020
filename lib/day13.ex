@@ -46,6 +46,52 @@ defmodule Day13 do
     brute_find(bus - inc, bus, rules)
   end
 
+  def brute_find_mod(base, mult, target_mod, div) do
+    case rem(base * mult, div) == target_mod do
+      true ->
+        base * mult
+      _ ->
+        brute_find_mod(base, mult + 1, target_mod, div)
+    end
+  end
+
+  def reduce_while_larger(s, m) do
+    case s < m do
+      true -> {s, m}
+      false -> reduce_while_larger(s - m, m)
+    end
+  end
+
+  def calc(rules) do
+    sol = Enum.map(rules, fn {inc, rbus} = rule ->
+      base = Enum.reduce(rules, 1, fn cand_rule, acc ->
+        case cand_rule == rule do
+          true ->
+            acc
+          _ ->
+            {_inc, bus} = cand_rule
+            acc * bus
+        end
+      end)
+      {base, rem(rbus - inc, rbus), rbus}
+    end)
+    |> Enum.map(fn {base, inc, bus} ->
+      brute_find_mod(base, 1, inc, bus)
+    end)
+    |> Enum.sum
+
+    mult = Enum.reduce(rules, 1, fn {_, rbus}, acc ->
+      acc * rbus
+    end)
+
+    reduce_while_larger(sol, mult)
+  end
+
+  def run2() do
+    rules = full_input |> parse2
+    {sol, _} = calc(rules)
+  end
+
   def test_input do
     lines = """
 939
