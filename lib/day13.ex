@@ -55,6 +55,32 @@ defmodule Day13 do
     end
   end
 
+  # mod_inverse implementation stolen from https://rosettacode.org/wiki/Modular_inverse#Elixir
+  def extended_gcd(a, b) do
+    {last_remainder, last_x} = extended_gcd(abs(a), abs(b), 1, 0, 0, 1)
+    {last_remainder, last_x * (if a < 0, do: -1, else: 1)}
+  end
+  defp extended_gcd(last_remainder, 0, last_x, _, _, _), do: {last_remainder, last_x}
+  defp extended_gcd(last_remainder, remainder, last_x, x, last_y, y) do
+    quotient = div(last_remainder, remainder)
+    remainder2 = rem(last_remainder, remainder)
+    extended_gcd(remainder, remainder2, x, last_x - quotient*x, y, last_y - quotient*y)
+  end
+  def mod_inverse(e, et) do
+    {g, x} = extended_gcd(e, et)
+    if g != 1, do: raise "The maths are broken!"
+    rem(x+et, et)
+  end
+
+  def find_mod(base, target_mod, div) do
+    case target_mod do
+      0 ->
+        base * div
+      _ ->
+        base * mod_inverse(base, div) * target_mod
+    end
+  end
+
   def reduce_while_larger(s, m) do
     case s < m do
       true -> {s, m}
@@ -69,14 +95,14 @@ defmodule Day13 do
           true ->
             acc
           _ ->
-            {_inc, bus} = cand_rule
-            acc * bus
+            {_inc, cand_bus} = cand_rule
+            acc * cand_bus
         end
       end)
       {base, rem(rbus - inc, rbus), rbus}
     end)
-    |> Enum.map(fn {base, inc, bus} ->
-      brute_find_mod(base, 1, inc, bus)
+    |> Enum.map(fn {base2, target_mod, bus} ->
+      find_mod(base2, target_mod, bus)
     end)
     |> Enum.sum
 
