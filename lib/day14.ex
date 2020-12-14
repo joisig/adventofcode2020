@@ -17,15 +17,54 @@ defmodule D14 do
     |> Enum.sum
   end
 
-  def parse(instructions) do
+  def parse(instructions, part \\ :one) do
     Enum.map(instructions, fn instr ->
       case instr do
         "mask = " <> _ ->
-          parse_mask(instr)
+          case part do
+            :one ->
+              parse_mask(instr)
+            :two ->
+              parse_mask2(instr)
+          end
         _ ->
           parse_instruction(instr)
       end
     end)
+  end
+
+  def to_bits_impl(0), do: []
+  def to_bits_impl(num) do
+    [num &&& 0x1|to_bits_impl(num >>> 1)]
+  end
+  def to_bits(num) do
+    # We need our bits always to be 36 to match length of rules
+    bits = to_bits_impl(num) |> Enum.reverse
+    Enum.reduce(1..(36 - length(bits)), bits, fn _, acc -> [0|acc] end)
+  end
+
+  def from_bits_impl([]), do: 0
+  def from_bits_impl([head|rest]) do
+    (from_bits_impl(rest) <<< 1) ||| head
+  end
+  def from_bits(bits) do
+    Enum.reverse(bits) |> from_bits_impl
+  end
+
+  # e.g. gen_bits([1, 1, 0, 1], [:x, :x, 1, 0])
+  def gen_bits(_, []), do: [[]]
+  def gen_bits([], rules) do
+    gen_bits([0], rules)
+  end
+  def gen_bits([ohead|orest], [rhead|rrest]) do
+    case rhead do
+      1 ->
+        Enum.map(gen_bits(orest, rrest), &([1] ++ &1))
+      0 ->
+        Enum.map(gen_bits(orest, rrest), &([ohead] ++ &1))
+      :x ->
+        Enum.map(gen_bits(orest, rrest), &([0] ++ &1)) ++ Enum.map(gen_bits(orest, rrest), &([1] ++ &1))
+    end
   end
 
   def parse_mask(line) do
@@ -46,9 +85,53 @@ defmodule D14 do
     {:masks, or_mask, and_mask}
   end
 
+  def parse_mask2(line) do
+    "mask = " <> mask = line
+    rules = String.graphemes(mask)
+    |> Enum.map(fn r ->
+      case r do
+        "0" -> 0
+        "1" -> 1
+        "X" -> :x
+      end
+    end)
+    {:masks, rules}
+  end
+
   def parse_instruction(line) do
     [_, pos, val] = Regex.run(~r/^mem\[(\d+)\] = (\d+)/, line)
     {:instruction, String.to_integer(pos), String.to_integer(val)}
+  end
+
+  # Just checking how many X bits we have at maximum (result is 9...)
+  def parse_count_x(lines) do
+    Enum.map(lines, fn line ->
+      case line do
+        "mask = " <> mask ->
+          String.graphemes(mask) |> Enum.count(&(&1 == "X"))
+        _ ->
+          0
+      end
+    end)
+    |> Enum.max
+  end
+
+  def run2 do
+    full_input |> parse(:two)
+    |> Enum.reduce({[], %{}}, fn instr, {rules, acc} ->
+      case instr do
+        {:masks, rules} ->
+           {rules, acc}
+        {:instruction, pos, val} ->
+          {
+            rules,
+            gen_bits(to_bits(pos), rules) |> Enum.map(&from_bits/1) |> Enum.reduce(acc, &(Map.put(&2, &1, val)))
+          }
+      end
+    end)
+    |> elem(1)
+    |> Map.values
+    |> Enum.sum
   end
   
   def test_input do
@@ -58,6 +141,16 @@ mem[8] = 11
 mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
 mem[7] = 101
 mem[8] = 0
+"""
+    |> String.split("\n") |> Enum.filter(&(&1 != ""))
+  end
+
+  def test_input2 do
+    lines = """
+mask = 000000000000000000000000000000X1001X
+mem[42] = 100
+mask = 00000000000000000000000000000000X0XX
+mem[26] = 1
 """
     |> String.split("\n") |> Enum.filter(&(&1 != ""))
   end
