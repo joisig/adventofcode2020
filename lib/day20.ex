@@ -45,7 +45,7 @@ defmodule D20 do
     right = Enum.map(image, fn line ->
       Enum.at(line, -1)
     end)
-    {Enum.at(image, 0), right, Enum.at(image, -1), left}
+    [Enum.at(image, 0), right, Enum.at(image, -1), left]
   end
 
   def possible_match(lb, rb) do
@@ -59,6 +59,24 @@ defmodule D20 do
     end)
   end
 
+  def all_possibilities(images, {cid, _, cborders}) do
+    Enum.filter(images, fn {image_id, _, borders} ->
+      case image_id == cid do
+        true -> false
+        _ ->
+          possible_match(cborders, borders)
+      end
+    end)
+  end
+
+  def run1 do
+    images = full_input_file |> read_file |> parse
+    Enum.filter(images, fn image ->
+      (all_possibilities(images, image) |> length) == 2
+    end)
+    |> Enum.reduce(1, fn {id, _, _}, acc -> acc * id end)
+  end
+
   def parse_chunk([name|lines]) do
     id = Regex.run(~r/Tile (\d+):/, name) |> Enum.at(1) |> String.to_integer
     lines = lines |> Enum.map(fn line -> String.graphemes(line) end)
@@ -67,7 +85,7 @@ defmodule D20 do
   end
 
   def parse(lines) do
-    Enum.reduce(lines, {[], []}, fn line, {out, build} ->
+    Enum.reduce(lines ++ [""], {[], []}, fn line, {out, build} ->
       case line do
         "" ->
           {[Enum.reverse(build)|out], []}
@@ -84,6 +102,10 @@ defmodule D20 do
   end
 
   def test_file do
-    "inputs/d19-test.txt"
+    "inputs/d20-test.txt"
+  end
+
+  def full_input_file do
+    "inputs/d20-full.txt"
   end
 end
