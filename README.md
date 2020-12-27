@@ -1,19 +1,12 @@
-# Adventofcode2020
+# Jói's solutions to Advent of Code 2020
 
-**TODO: Add description**
+I discovered Advent of Code this year, hadn't heard of it before, but it was a lot of fun. I wasn't stressing to score on any leaderboards, and preferred to do "correct" solutions rather than shortcut solutions (for example, writing a small recursive descent parser for the calculator problem, rather than fidding with operator overloading in a language that allows it). Since I've been programming a fair bit in Elixir, I decided I would hone my algorithmic skills in that language by solving all problems using it.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `adventofcode2020` to your list of dependencies in `mix.exs`:
+I typically ran each of the solutions from the Elixir REPL, so to run a solution do something like:
 
-```elixir
-def deps do
-  [{:adventofcode2020, "~> 0.1.0"}]
-end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/adventofcode2020](https://hexdocs.pm/adventofcode2020).
-
+iex -S mix
+> D25.run1
+```
